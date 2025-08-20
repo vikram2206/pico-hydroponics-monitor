@@ -22,34 +22,8 @@ It collects **environmental and water quality data** (pH, TDS, water temperature
 ---
 
 ##  Repository Structure:
-pico-hydroponics-monitor/
-│── firmware/ # Embedded code for Raspberry Pi Pico W
-│ ├── main.py
-│ ├── ph_reader.py
-│ ├── tds_reader.py
-│ ├── water_temp_reader.py
-│ ├── bme_reader.py
-│ ├── rtc_clock.py
-│
-│── app/ # Web application (Flask + PHP + MySQL)
-│ ├── app.py
-│ ├── test.py
-│ ├── db_connect.php
-│ ├── insert.php
-│ ├── static/
-│ │ ├── styles.css
-│ │ └── js/plotly-latest.min.js
-│ └── templates/
-│ └── index.html
-│
-│── docs/ # Documentation & diagrams
-│ ├── architecture.md
-│ └── circuit.png
-│
-└── README.md # Project overview
-
-
-
+## Diagram
+![Repo Structure](docs/structure.png)
 ---
 
 ## 🛠 Hardware Setup
