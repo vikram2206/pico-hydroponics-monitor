@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HydroSense</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='js/plotly-latest.min.js') }}"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>HydroSense</h1>
+        <button id="show-data">Show Data</button>
+
+        <!-- Table for Data -->
+        <table id="data-table">
+            <thead>
+                <tr>
+                    <th>Seconds Since 2000</th>
+                    <th>pH Value</th>
+                    <th>EC Value</th>
+                    <th>Water Temperature</th>
+                    <th>Air Temperature</th>
+                    <th>Humidity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data rows will be populated by JavaScript -->
+            </tbody>
+        </table>
+
+        <!-- Graphs -->
+        <div id="graph-raw" class="graph"></div>
+        <div id="graph-fir" class="graph"></div>
+        <div id="graph-kalman" class="graph"></div>
+        <div id="graph-combined" class="graph"></div>
+    </div>
+
+    <script>
+        document.getElementById('show-data').addEventListener('click', function() {
+            fetch('/data')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Received data:", data);
+
+                    // Populate the table
+                    const tableBody = document.querySelector('#data-table tbody');
+                    tableBody.innerHTML = ''; // Clear existing rows
+                    data.x_values.forEach((x, i) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${x}</td>
+                            <td>${data.y_values[i]}</td>
+                            <td>${data.ec_values[i]}</td>
+                            <td>${data.water_temp[i]}</td>
+                            <td>${data.air_temp[i]}</td>
+                            <td>${data.humidity[i]}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+
+                    // Graph 1: Raw pH Values
+                    Plotly.newPlot('graph-raw', [{
+                        x: data.x_values,
+                        y: data.y_values,
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        name: 'Raw pH'
+                    }], {
+                        title: 'Raw pH Values',
+                        xaxis: { title: 'Time' },
+                        yaxis: { title: 'pH Value' }
+                    });
+
+                    // Graph 2: FIR Filtered
+                    Plotly.newPlot('graph-fir', [{
+                        x: data.x_values,
+                        y: data.y_smooth,
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: 'FIR Filtered pH'
+                    }], {
+                        title: 'FIR Filtered pH Values',
+                        xaxis: { title: 'Time' },
+                        yaxis: { title: 'pH Value' }
+                    });
+
+                    // Graph 3: Kalman Filtered
+                    Plotly.newPlot('graph-kalman', [{
+                        x: data.x_values,
+                        y: data.y_kalman,
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: 'Kalman Filtered pH'
+                    }], {
+                        title: 'Kalman Filtered pH Values',
+                        xaxis: { title: 'Time' },
+                        yaxis: { title: 'pH Value' }
+                    });
+
+                    // Graph 4: Combined View
+                    Plotly.newPlot('graph-combined', [
+                        {
+                            x: data.x_values,
+                            y: data.y_values,
+                            type: 'scatter',
+                            mode: 'lines+markers',
+                            name: 'Raw pH'
+                        },
+                        {
+                            x: data.x_values,
+                            y: data.y_smooth,
+                            type: 'scatter',
+                            mode: 'lines',
+                            name: 'FIR Filtered pH'
+                        },
+                        {
+                            x: data.x_values,
+                            y: data.y_kalman,
+                            type: 'scatter',
+                            mode: 'lines',
+                            name: 'Kalman Filtered pH'
+                        }
+                    ], {
+                        title: 'pH Value Comparison (Raw vs FIR vs Kalman)',
+                        xaxis: { title: 'Time' },
+                        yaxis: { title: 'pH Value' }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                });
+        });
+    </script>
+</body>
+</html>
